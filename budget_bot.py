@@ -3,7 +3,7 @@ from matrix_bot_api.mregex_handler import MRegexHandler
 from matrix_bot_api.mcommand_handler import MCommandHandler
 from dotenv import load_dotenv
 from deta import Deta
-import os, datetime
+import os, datetime, requests
 
 load_dotenv()
 
@@ -29,7 +29,9 @@ def monthly_budget_callback(room, event):
 
 
 def review_purchases(room, event):
-    pass
+    u_key = users.fetch({"matrix": event['sender']}).items[0]['key']
+    r = requests.get(f'http://api.nessieisreal.com/accounts/{u_key}/purchases?key={os.environ.get("CAPITAL_ONE_KEY")}')
+    transactions = r.json()
 
 
 def link_capital_one_account(room, event):
@@ -56,6 +58,9 @@ def main():
 
     monthly_budget_handler = MCommandHandler("monthly_budget", monthly_budget_callback)
     bot.add_handler(monthly_budget_handler)
+
+    review_purchases_handler = MCommandHandler("review_purchases", review_purchases)
+    bot.add_handler(review_purchases_handler)
 
     # Start polling
     bot.start_polling()
