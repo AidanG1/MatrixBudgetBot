@@ -32,6 +32,16 @@ def review_purchases(room, event):
     u_key = users.fetch({"matrix": event['sender']}).items[0]['key']
     r = requests.get(f'http://api.nessieisreal.com/accounts/{u_key}/purchases?key={os.environ.get("CAPITAL_ONE_KEY")}')
     transactions = r.json()
+    merchant_counts = {}
+    for transaction in transactions:
+        if transaction.merchant_id in merchant_counts:
+            merchant_counts['merchant_id'] += 1
+        else:
+            merchant_counts['merchant_id'] = 0
+    high_purchase_merchants = []
+    for merchant, count in merchant_counts.items():
+        if count > 0.2 * len(transactions):
+            high_purchase_merchants.append(merchant)
 
 
 def link_capital_one_account(room, event):
