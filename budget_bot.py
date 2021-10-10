@@ -3,7 +3,7 @@ from matrix_bot_api.mregex_handler import MRegexHandler
 from matrix_bot_api.mcommand_handler import MCommandHandler
 from dotenv import load_dotenv
 from deta import Deta
-import os, requests
+import os, datetime
 
 load_dotenv()
 
@@ -23,7 +23,7 @@ def hi_callback(room, event):
 
 def monthly_budget_callback(room, event):
     budget = event['content']['body'].split()[1]
-    user = next(users.fetch({"matrix": event['sender']}))[0]
+    user = users.fetch({"matrix": event['sender']}).items[0]
     users.update({'budget': budget}, user['key'])
     room.send_text(f'Your budget has been set to ${budget}')
 
@@ -38,13 +38,13 @@ def link_capital_one_account(room, event):
         "matrix": event['sender'],
         "capital_one_id": c1id,
     })
+    room.send_text('Matrix successfully linked to Capital One')
 
 
 def main():
     # Create an instance of the MatrixBotAPI
     bot = MatrixBotAPI(USERNAME, PASSWORD, SERVER)
-    print(bot)
-    print('hi')
+    print(f'{bot} intialized at time {datetime.datetime.now()}')
 
     # Add a regex handler waiting for the word Hi
     hi_handler = MRegexHandler("Hi", hi_callback)
@@ -56,8 +56,6 @@ def main():
 
     monthly_budget_handler = MCommandHandler("monthly_budget", monthly_budget_callback)
     bot.add_handler(monthly_budget_handler)
-
-
 
     # Start polling
     bot.start_polling()

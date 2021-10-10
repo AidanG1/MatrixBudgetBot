@@ -33,10 +33,34 @@ class MatrixBotAPI:
 
         # If rooms is None, we should listen for invites
         # and automatically accept them
+        # rooms_to_join = ['!kGOcQEfUtnqfVABnwC:matrix.org', '!uBoySfyKFRybhSoXYL:matrix.org']
+        rooms_to_join = []
         self.rooms = []
-        
+
         # Store allowed room ids
         self.room_ids = []
+        self.client.add_invite_listener(self.handle_invite)
+        for room in rooms_to_join:
+            print(room)
+            try:
+                # If room is a string we assume it is a room_id
+                # Otherwise, we assume it a room object for backwards
+                # compatibility sake.
+                if isinstance(room, str):
+                    _room = self.client.join_room(room)
+
+                else:
+                    _room = room
+
+                _room.add_listener(self.handle_message)
+                print(f'Listener added for {room}')
+                self.rooms.append(_room)
+                self.room_ids.append(_room.room_id)
+
+            except MatrixRequestError as error:
+                print(error)
+                if error.code == 403:
+                    print('You likely need to invite the bot')
         if rooms is None:
             self.client.add_invite_listener(self.handle_invite)
 
@@ -46,35 +70,12 @@ class MatrixBotAPI:
                 room.add_listener(self.handle_message)
                 self.rooms.append(room)
                 self.room_ids.append(room_id)
-        else:
-            self.client.add_invite_listener(self.handle_invite)
-
-            # Add the message callback for all specified rooms
-            for room in rooms:
-                try:
-                    # If room is a string we assume it is a room_id
-                    # Otherwise, we assume it a room object for backwards
-                    # compatibility sake.
-                    if isinstance(room, str):
-                        _room = self.client.join_room(room)
-
-                    else:
-                        _room = room
-
-                    _room.add_listener(self.handle_message)
-                    self.rooms.append(_room)
-                    self.room_ids.append(_room.room_id)
-
-                except MatrixRequestError as error:
-                    print(error)
-                    if error.code == 403:
-                        print('You likely need to invite the bot')
-
 
     def add_handler(self, handler):
         self.handlers.append(handler)
 
     def handle_message(self, room, event):
+        print(event)
         # Make sure we didn't send this message
         if re.match("@" + self.username, event['sender']):
             return
@@ -96,6 +97,7 @@ class MatrixBotAPI:
 
         # Add message callback for this room
         room.add_listener(self.handle_message)
+        print('Listener added')
 
         # Add room to list
         self.rooms.append(room)
